@@ -6,20 +6,116 @@ output:
 ---
 
 
+---
+title: "PA1_template.Rmd"
+author: "Azam Yahya"
+date: "October 13, 2015"
+output: html_document
+---
+
 ## Loading and preprocessing the data
+```{r}
+activity <- read.csv("Z:/Ferguson 13 march/other assignment/DS/Coursera/Courses/Reproducible research/Assignment/Assignment 1/Data/activity.csv")
+```
+Process/transform the data
+
+```{r}
+activity$date <- as.Date(activity$date,"%d-%m-%y")
+activity <- na.omit(activity)
+```
+##What is mean total number of steps taken per day?
+
+Calculate the total number of steps taken per day
+```{r}
+step_sum <- aggregate(steps ~ date, activity, sum)
+print(step_sum)
+```
+Make a histogram of the total number of steps taken each day
+```{r}
+hist(step_sum$steps, col = "blue")
+```
+Calculate and report the mean and median of the total number of steps taken per day
+```{r}
+mean(step_sum$steps)
+median(step_sum$steps)
+```
+
+* The Mean of the total numner of steps taken per day is 10766.19
+* The Median of the total numner of steps taken per day is 10765
+
+##What is the average daily activity pattern?
+Make a time series plot
+
+```{r}
+library(ggplot2)
+max <- aggregate(steps ~ interval, activity, mean)
+g <- ggplot(max,aes(interval, steps))
+g <- g + geom_line()
+print(g)
+```
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+max[which.max(max$steps), ]
+```
+* Interval 835 has the highest average number of steps i.e 206.17
 
 
+##Imputing missing values
+Calculate and report the total number of missing values in the dataset
 
-## What is mean total number of steps taken per day?
+```{r}
+activity <- read.csv("Z:/Ferguson 13 march/other assignment/DS/Coursera/Courses/Reproducible research/Assignment/Assignment 1/Data/activity.csv")
+sum(is.na(activity$steps))
+```
+* There are 2304 missing values
 
+Devise a strategy for filling in all of the missing values in the dataset
 
+* My strategy uses the mean for that 5-minute interval
 
-## What is the average daily activity pattern?
+```{r}
+library(zoo, quietly = TRUE)
+activity$steps1 <- na.aggregate(activity$steps, by = activity$interval, FUN = mean)
+```
+Create a new dataset that is equal to the original dataset but with the missing data filled in.
+```{r}
+activity2 <- activity[c(4,2,3)]
+```
+Make a histogram of the total number of steps taken each day
+```{r}
+step_sum2 <- aggregate(steps1 ~ date, activity2, sum)
+hist(step_sum2$steps1, col = "orange")
+```
 
+```{r}
+mean(step_sum2$steps1)
+median(step_sum2$steps1)
+```
+* The mean is same i.e. 10766.19 after imputing the missing values.
+* There is a difference of 1.9 steps between the median after imputing the missing values
 
+##Are there differences in activity patterns between weekdays and weekends?
 
-## Imputing missing values
+Create a new factor variable in the dataset with two levels – “weekday” and “weekend”
 
+```{r}
+activity2$date <- as.Date(activity2$date,"%d-%m-%y")
+activity2["week_type"] <- NA
+activity2$week_type <- weekdays(activity2$date)
+activity2$week_type <- ifelse(activity2$week_type =="Saturday" |activity2$week_type == "Sunday","weekend","weekday" )
+activity2$week_type <- as.factor(activity2$week_type)
+```
+Make a panel plot containing a time series plot
+
+```{r}
+library(lattice)
+week <- aggregate(steps1 ~ interval + week_type, activity2, mean)
+xyplot(week$steps1 ~ week$interval | week$week_type, layout = c(1,2), type = "l")
+```
+
+* There are more fluctuation during the weekends than weekdays. However, the highest numners of steps results during the weekdays bwtween the interval of 800 to 900. 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
